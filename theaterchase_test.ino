@@ -57,25 +57,39 @@ void loop() {
 }
 
 void startShow(int i) {
+  // while this is running, the button is ignored
   switch(i){
-    case 0: theaterChase(strip1.Color(0, 0, 0, 0), 50);    // Black/off
+    case 0: 
+      theaterChase(strip1.Color(0, 0, 0, 0), 50);    // Black/off
+      break;
            
-    case 1: theaterChase(strip1.Color(0, 255, 0, 0), 50);  // Red (strip1)
+    case 1: 
+      theaterChase(strip1.Color(0, 255, 0, 0), 50);  // Red (strip1)
+      break;
 
-    case 2: theaterChase(strip1.Color(0x4B, 0x0, 0x82, 0), 70);  // Blue 
+    case 2: 
+      theaterChase(strip1.Color(0x4B, 0x0, 0x82, 0), 70);  // Blue 
+      break;
 
-    case 3: theaterChase(strip1.Color(100,255,0,0), 70); // Yellow
+    case 3: 
+      theaterChase(strip1.Color(100,255,0,0), 70); // Yellow
+      break;
     
-    case 4: theaterChase(strip1.Color(0, 0, 0, 0), 50);    // Black/off
+    case 4: 
+      theaterChase(strip1.Color(0, 0, 0, 0), 50);    // Black/off
+      break;
             
+    case 5: 
+      theaterChase(strip2.Color(8, 158, 148, 0), 50);    // purple
+      break;
             
-    case 5: theaterChase(strip2.Color(8, 158, 148, 0), 50);    // purple
-            
-            
-    case 6: theaterChase(strip2.Color(127, 127, 127, 0), 50); // White
+    case 6: 
+      theaterChase(strip2.Color(127, 127, 127, 0), 50); // White
+      break;
 
-    case 7: theaterChase(strip2.Color(0, 0, 0, 0), 50);    // Black/off
-            break;
+    case 7: 
+      theaterChase(strip2.Color(0, 0, 0, 0), 50);    // Black/off
+      break;
  
   
   
@@ -93,23 +107,34 @@ void startShow(int i) {
 
 //Theatre-style crawling lights.
 void theaterChase(uint32_t c, uint8_t wait) {
-  for (int j=0; j<7; j++) {  //do 7 cycles of chasing
-    for (int q=0; q < 3; q++) {
-      for (int i=0; i < strip1.numPixels(); i=i+3) {
-        strip1.setPixelColor(i+q, c);
-        strip2.setPixelColor(i+q, c);//turn every third pixel on
-      }
-      strip1.show();
-      strip2.show();
+  // a frame is 1 move: a "shift"
+  for (int frame=0; frame<7; frame++) {
+    // the animation is in sets of 3:
+    // (1,0,0)...
+    // (0,1,0)...
+    // (0,0,1)...
+    // repeat
+    // So, "on" is +0, +1, +2
+    // And off is +1/+2, +2/+0, +0,+1
+    // Which is modulus arithmetic on 3
+    // I.e. wrap around
+    int on = frame % 3;    // +0,+1,+2
+    off1 = (frame + 1) % 3 // +1,+2,+0
+    off2 = (frame + 2) % 3 // +2,+0,+1
 
-      delay(wait);
-
-      for (int i=0; i < strip1.numPixels(); i=i+3)
-      for (int i=0; i < strip2.numPixels(); i=i+3){
-        strip1.setPixelColor(i+q, 0);
-        strip2.setPixelColor(i+q, 0);//turn every third pixel off
-      }
+    // across all the pixels, one set of 3 at a time
+    for (int p=0; p < strip1.numPixels(); p += 3) {
+      // one set of 3
+      strip1.setPixelColor(on, c);
+      strip1.setPixelColor(off1, black);
+      strip1.setPixelColor(off2, black);
+      strip2.setPixelColor(on, c);
+      strip2.setPixelColor(off1, black);
+      strip2.setPixelColor(off2, black);
     }
+    strip1.show();
+    strip2.show();
+    delay(wait); // between frames
   }
 }
 
