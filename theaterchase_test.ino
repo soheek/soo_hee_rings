@@ -23,10 +23,17 @@
 Adafruit_NeoPixel strip1 = Adafruit_NeoPixel(PIXEL_COUNT, PIXEL_PIN1, NEO_RGBW + NEO_KHZ800);
 Adafruit_NeoPixel strip2 = Adafruit_NeoPixel(PIXEL_COUNT, PIXEL_PIN2, NEO_RGBW + NEO_KHZ800);
 
+uint32_t black = strip1.Color(0, 0, 0, 0);
+
 bool oldState = HIGH;
 int showType = 0;
 
+//#define DEBUG // uncomment to output to serial console for debugging
+
 void setup() {
+  #ifdef DEBUG
+    Serial.begin(115200);
+  #endif
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   strip1.begin();
   strip1.show();
@@ -39,11 +46,17 @@ void loop() {
   bool newState = digitalRead(BUTTON_PIN);
 
   // Check if state changed from high to low (button press).
+  #ifdef DEBUG
+    newState=LOW; oldState=HIGH; // I pushed the button!
+  #endif
   if (newState == LOW && oldState == HIGH) {
     // Short delay to debounce button.
     delay(20);
     // Check if button is still low after debounce.
     newState = digitalRead(BUTTON_PIN);
+    #ifdef DEBUG
+      newState = LOW;
+    #endif
     if (newState == LOW) {
       showType++;
       if (showType > 9)
@@ -90,8 +103,6 @@ void startShow(int i) {
     case 7: 
       theaterChase(strip2.Color(0, 0, 0, 0), 50);    // Black/off
       break;
- 
-  
   
   }
 }
@@ -108,6 +119,9 @@ void startShow(int i) {
 //Theatre-style crawling lights.
 void theaterChase(uint32_t c, uint8_t wait) {
   // a frame is 1 move: a "shift"
+  #ifdef DEBUG
+    Serial.println(c);
+  #endif
   for (int frame=0; frame<7; frame++) {
     // the animation is in sets of 3:
     // (1,0,0)...
@@ -119,8 +133,8 @@ void theaterChase(uint32_t c, uint8_t wait) {
     // Which is modulus arithmetic on 3
     // I.e. wrap around
     int on = frame % 3;    // +0,+1,+2
-    off1 = (frame + 1) % 3 // +1,+2,+0
-    off2 = (frame + 2) % 3 // +2,+0,+1
+    int off1 = (frame + 1) % 3; // +1,+2,+0
+    int off2 = (frame + 2) % 3; // +2,+0,+1
 
     // across all the pixels, one set of 3 at a time
     for (int p=0; p < strip1.numPixels(); p += 3) {
@@ -131,9 +145,15 @@ void theaterChase(uint32_t c, uint8_t wait) {
       strip2.setPixelColor(on, c);
       strip2.setPixelColor(off1, black);
       strip2.setPixelColor(off2, black);
+      #ifdef DEBUG
+        Serial.print(on);Serial.print(off1);Serial.print(off2);
+      #endif
     }
     strip1.show();
     strip2.show();
+    #ifdef DEBUG
+      Serial.println();
+    #endif
     delay(wait); // between frames
   }
 }
